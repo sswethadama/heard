@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep all two-person room data behind server functions; anonymous clients authenticate with separate unguessable participant tokens so private text never enters the browser bundle or public data API.
-- Poll room status rather than using realtime subscriptions; the short single-session flow favors simpler teardown and predictable privacy boundaries.
+- Two-device rooms get instant updates by listening to the public `rooms` status table (names + status only); private texts stay in heard_rooms behind server functions so live updates never expose them.
