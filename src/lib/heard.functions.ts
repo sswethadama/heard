@@ -151,11 +151,12 @@ export const submitRoomPerspective = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const tokenColumn = data.role === "a" ? "person_a_token" : "person_b_token";
-    const textColumn = data.role === "a" ? "person_a_text" : "person_b_text";
-    const submittedColumn = data.role === "a" ? "person_a_submitted_at" : "person_b_submitted_at";
+    const update = data.role === "a"
+      ? { person_a_text: data.text, person_a_submitted_at: new Date().toISOString() }
+      : { person_b_text: data.text, person_b_submitted_at: new Date().toISOString() };
     const { data: updated, error } = await supabaseAdmin
       .from("heard_rooms")
-      .update({ [textColumn]: data.text, [submittedColumn]: new Date().toISOString() })
+      .update(update)
       .eq("id", data.roomId)
       .eq(tokenColumn, data.token)
       .gt("expires_at", new Date().toISOString())
