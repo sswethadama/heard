@@ -116,12 +116,14 @@ export const joinRoom = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!room) throw new Error("That room code wasn't found or has expired.");
     if (room.person_b_joined_at) throw new Error("That room already has two people.");
-    const { error } = await supabaseAdmin
+    const { data: claimedRoom, error } = await supabaseAdmin
       .from("heard_rooms")
       .update({ person_b_joined_at: new Date().toISOString() })
       .eq("id", room.id)
-      .is("person_b_joined_at", null);
-    if (error) throw new Error("We couldn't join that room. Please try again.");
+      .is("person_b_joined_at", null)
+      .select("id")
+      .maybeSingle();
+    if (error || !claimedRoom) throw new Error("That room already has two people.");
     return { roomId: room.id, code: room.code, token: room.person_b_token, expiresAt: room.expires_at };
   });
 
