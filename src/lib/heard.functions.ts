@@ -87,7 +87,16 @@ export const analyzeConflict = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => analyzeTexts(data.personA, data.personB));
 
-export const createRoom = createServerFn({ method: "POST" }).handler(async () => {
+const nameSchema = z.string().trim().min(1).max(40);
+
+async function setRoomSignal(heardRoomId: string, patch: { status?: string; name_b?: string }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("rooms").update({ ...patch, updated_at: new Date().toISOString() }).eq("heard_room_id", heardRoomId);
+}
+
+export const createRoom = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ name: nameSchema }).parse(data))
+  .handler(async ({ data: input }) => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const code = makeCode();
@@ -97,6 +106,7 @@ export const createRoom = createServerFn({ method: "POST" }).handler(async () =>
       .select("id, code, person_a_token, expires_at")
       .single();
     if (!error && data) {
+      await supabaseAdmin.from("rooms").insert({ heard_room_id: data.id, room_code: data.code, name_a: input.name, status: "waiting" });
       return { roomId: data.id, code: data.code, token: data.person_a_token, expiresAt: data.expires_at };
     }
     if (error?.code !== "23505") throw new Error("We couldn't create a room. Please try again.");
@@ -105,7 +115,7 @@ export const createRoom = createServerFn({ method: "POST" }).handler(async () =>
 });
 
 export const joinRoom = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z]{4}$/) }).parse(data))
+  .inputValidator((data) => z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z]{4}$/), name: nameSchema }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: room } = await supabaseAdmin
@@ -124,6 +134,7 @@ export const joinRoom = createServerFn({ method: "POST" })
       .select("id")
       .maybeSingle();
     if (error || !claimedRoom) throw new Error("That room already has two people.");
+    await setRoomSignal(room.id, { name_b: data.name, status: "joined" });
     return { roomId: room.id, code: room.code, token: room.person_b_token, expiresAt: room.expires_at };
   });
 
@@ -140,7 +151,10 @@ export const getRoomStatus = createServerFn({ method: "POST" })
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
     if (!room) throw new Error("This private room is no longer available.");
+    const { data: signal } = await supabaseAdmin.from("rooms").select("name_a, name_b").eq("heard_room_id", data.roomId).maybeSingle();
     return {
+      nameA: signal?.name_a ?? "Person A",
+      nameB: signal?.name_b ?? "Person B",
       joined: Boolean(room.person_b_joined_at),
       youSubmitted: Boolean(data.role === "a" ? room.person_a_submitted_at : room.person_b_submitted_at),
       bothSubmitted: Boolean(room.person_a_submitted_at && room.person_b_submitted_at),
@@ -169,9 +183,12 @@ export const submitRoomPerspective = createServerFn({ method: "POST" })
     if (updated.person_a_submitted_at && updated.person_b_submitted_at && updated.person_a_text && updated.person_b_text) {
       const analysis = updated.analysis as ConflictAnalysis | null;
       if (analysis) return { bothSubmitted: true, analysis };
+      await setRoomSignal(data.roomId, { status: "analyzing" });
       const freshAnalysis = await analyzeTexts(updated.person_a_text, updated.person_b_text);
       await supabaseAdmin.from("heard_rooms").update({ analysis: freshAnalysis }).eq("id", data.roomId).is("analysis", null);
+      await setRoomSignal(data.roomId, { status: "revealed" });
       return { bothSubmitted: true, analysis: freshAnalysis };
     }
+    await setRoomSignal(data.roomId, { status: data.role === "a" ? "a_submitted" : "b_submitted" });
     return { bothSubmitted: false, analysis: null };
   });
