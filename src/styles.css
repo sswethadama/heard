@@ -64,7 +64,7 @@
   --color-soft-rose: var(--soft-rose);
   --font-display: Georgia, "Times New Roman", serif;
   --font-sans: Arial, ui-sans-serif, system-ui, sans-serif;
-  --shadow-heard: 0 12px 30px color-mix(in oklab, var(--primary) 18%, transparent);
+  --shadow-heard: 0 10px 28px -6px color-mix(in oklab, var(--primary) 55%, transparent), 0 0 24px color-mix(in oklab, var(--primary) 30%, transparent);
 }
 
 :root {
@@ -149,9 +149,8 @@
   body {
     background-color: var(--color-background);
     background-image:
-      radial-gradient(90% 55% at 50% -10%, oklch(0.32 0.014 245) 0%, transparent 72%),
-      radial-gradient(70% 45% at 100% 105%, oklch(0.28 0.012 250) 0%, transparent 70%),
-      radial-gradient(60% 40% at 0% 100%, oklch(0.24 0.01 240) 0%, transparent 70%);
+      radial-gradient(140% 70% at 50% -25%, oklch(0.42 0.13 6) 0%, oklch(0.28 0.055 350) 42%, transparent 72%),
+      linear-gradient(180deg, oklch(0.26 0.035 350) 0%, var(--background) 46%, oklch(0.13 0.012 245) 100%);
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
