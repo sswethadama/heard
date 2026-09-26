@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep all two-person room data behind server functions; anonymous clients authenticate with separate unguessable participant tokens so private text never enters the browser bundle or public data API.
+- Poll room status rather than using realtime subscriptions; the short single-session flow favors simpler teardown and predictable privacy boundaries.
