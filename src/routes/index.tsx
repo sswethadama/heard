@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Check, Copy, EyeOff, Link2, LoaderCircle, LockKeyhole, RotateCcw, Smartphone, Sparkles, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { supabase } from "@/integrations/supabase/client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/")({
   component: HeardApp,
 });
 
-type Screen = "landing" | "single-a" | "handoff" | "single-b" | "two-choice" | "room" | "write" | "waiting" | "analyzing" | "reveal";
+type Screen = "landing" | "names" | "single-a" | "handoff" | "single-b" | "two-choice" | "room" | "write" | "waiting" | "analyzing" | "reveal";
 type RoomSession = { roomId: string; code: string; token: string; role: "a" | "b" };
 
 function HeardApp() {
@@ -30,6 +32,9 @@ function HeardApp() {
   const [personA, setPersonA] = useState("");
   const [personB, setPersonB] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [nameA, setNameA] = useState("");
+  const [nameB, setNameB] = useState("");
+  const [myName, setMyName] = useState("");
   const [room, setRoom] = useState<RoomSession | null>(null);
   const [analysis, setAnalysis] = useState<ConflictAnalysis | null>(null);
   const [error, setError] = useState("");
@@ -43,13 +48,14 @@ function HeardApp() {
   const analyzeFn = useServerFn(analyzeConflict);
 
   const reset = () => {
-    setScreen("landing"); setPersonA(""); setPersonB(""); setJoinCode(""); setRoom(null); setAnalysis(null); setError("");
+    setScreen("landing"); setPersonA(""); setPersonB(""); setJoinCode(""); setNameA(""); setNameB(""); setRoom(null); setAnalysis(null); setError("");
   };
 
   const create = async () => {
     setBusy(true); setError("");
     try {
-      const result = await createRoomFn();
+      const result = await createRoomFn({ data: { name: myName } });
+      setNameA(myName.trim());
       setRoom({ ...result, role: "a" });
       setScreen("room");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Please try again."); }
@@ -59,7 +65,8 @@ function HeardApp() {
   const join = async () => {
     setBusy(true); setError("");
     try {
-      const result = await joinRoomFn({ data: { code: joinCode } });
+      const result = await joinRoomFn({ data: { code: joinCode, name: myName } });
+      setNameB(myName.trim());
       setRoom({ ...result, role: "b" });
       setScreen("write");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Please check the code."); }
@@ -70,6 +77,7 @@ function HeardApp() {
     if (!room) return;
     try {
       const status = await statusFn({ data: room });
+      setNameA(status.nameA); setNameB(status.nameB);
       if (status.analysis) { setAnalysis(status.analysis); setScreen("reveal"); return; }
       if (screen === "room" && status.joined) setScreen("write");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "This room is unavailable."); }
@@ -78,8 +86,13 @@ function HeardApp() {
   useEffect(() => {
     if (!room || !["room", "waiting", "analyzing"].includes(screen)) return;
     void checkStatus();
-    const interval = window.setInterval(() => void checkStatus(), 2200);
-    return () => window.clearInterval(interval);
+    const channel = supabase
+      .channel(`room-${room.code}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `room_code=eq.${room.code}` }, () => void checkStatus())
+      .subscribe();
+    // Slow safety net in case the live connection drops.
+    const interval = window.setInterval(() => void checkStatus(), 15000);
+    return () => { window.clearInterval(interval); void supabase.removeChannel(channel); };
   }, [room, screen, checkStatus]);
 
   const submitRoom = async () => {
@@ -108,16 +121,17 @@ function HeardApp() {
           {screen !== "landing" && <Button variant="ghost" size="icon" onClick={reset} aria-label="Start over"><RotateCcw /></Button>}
         </header>
         <div className="flex flex-1 flex-col justify-center py-8 animate-soft-in">
-          {screen === "landing" && <Landing onSingle={() => setScreen("single-a")} onTwo={() => setScreen("two-choice")} />}
-          {screen === "single-a" && <WriteScreen person="Person A" value={personA} onChange={setPersonA} onBack={() => setScreen("landing")} onSubmit={() => setScreen("handoff")} busy={false} />}
-          {screen === "handoff" && <Handoff onReady={() => setScreen("single-b")} />}
-          {screen === "single-b" && <WriteScreen person="Person B" value={personB} onChange={setPersonB} onBack={() => setScreen("handoff")} onSubmit={submitSingle} busy={false} />}
-          {screen === "two-choice" && <TwoChoice joinCode={joinCode} setJoinCode={setJoinCode} onCreate={create} onJoin={join} busy={busy} />}
+          {screen === "landing" && <Landing onSingle={() => setScreen("names")} onTwo={() => setScreen("two-choice")} />}
+          {screen === "names" && <Names nameA={nameA} nameB={nameB} setNameA={setNameA} setNameB={setNameB} onBack={() => setScreen("landing")} onContinue={() => setScreen("single-a")} />}
+          {screen === "single-a" && <WriteScreen person={nameA || "Person A"} value={personA} onChange={setPersonA} onBack={() => setScreen("names")} onSubmit={() => setScreen("handoff")} busy={false} />}
+          {screen === "handoff" && <Handoff nameA={nameA || "Person A"} nameB={nameB || "Person B"} onReady={() => setScreen("single-b")} />}
+          {screen === "single-b" && <WriteScreen person={nameB || "Person B"} value={personB} onChange={setPersonB} onBack={() => setScreen("handoff")} onSubmit={submitSingle} busy={false} />}
+          {screen === "two-choice" && <TwoChoice name={myName} setName={setMyName} joinCode={joinCode} setJoinCode={setJoinCode} onCreate={create} onJoin={join} busy={busy} />}
           {screen === "room" && room && <RoomCode code={room.code} copied={copied} onCopy={() => { void navigator.clipboard.writeText(room.code); setCopied(true); window.setTimeout(() => setCopied(false), 1600); }} />}
-          {screen === "write" && room && <WriteScreen person="You" value={room.role === "a" ? personA : personB} onChange={room.role === "a" ? setPersonA : setPersonB} onBack={reset} onSubmit={submitRoom} busy={busy} />}
+          {screen === "write" && room && <WriteScreen person={myName.trim() || "You"} value={room.role === "a" ? personA : personB} onChange={room.role === "a" ? setPersonA : setPersonB} onBack={reset} onSubmit={submitRoom} busy={busy} />}
           {screen === "waiting" && <Waiting />}
           {screen === "analyzing" && <Analyzing />}
-          {screen === "reveal" && analysis && <Reveal analysis={analysis} onReset={reset} />}
+          {screen === "reveal" && analysis && <Reveal nameA={nameA || "Person A"} nameB={nameB || "Person B"} analysis={analysis} onReset={reset} />}
           {error && <p role="alert" className="mt-5 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground">{error}</p>}
         </div>
         {screen !== "reveal" && <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"><LockKeyhole className="size-3.5" /> Private by design. Rooms expire after 24 hours.</p>}
@@ -151,23 +165,40 @@ function WriteScreen({ person, value, onChange, onBack, onSubmit, busy }: { pers
   </section>;
 }
 
-function Handoff({ onReady }: { onReady: () => void }) {
-  return <section className="text-center">
-    <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border bg-surface"><Smartphone className="size-7 text-primary" /></div>
-    <h1 className="mt-7 font-display text-4xl">Pass the device to Person B</h1>
-    <p className="mx-auto mt-4 max-w-sm leading-7 text-muted-foreground">Person A's response is sealed and hidden. When Person B has the device, they can continue.</p>
-    <Button variant="heard" size="heard" className="mt-9 w-full" onClick={onReady}>I'm Person B — I'm ready <ArrowRight /></Button>
+function Names({ nameA, nameB, setNameA, setNameB, onBack, onContinue }: { nameA: string; nameB: string; setNameA: (v: string) => void; setNameB: (v: string) => void; onBack: () => void; onContinue: () => void }) {
+  const valid = nameA.trim() && nameB.trim();
+  const field = "h-14 border border-primary/30 bg-card text-base";
+  return <section>
+    <Button variant="ghost" onClick={onBack} className="-ml-3 mb-8 text-muted-foreground"><ArrowLeft />Back</Button>
+    <p className="text-sm font-medium text-primary">One device</p><h1 className="mt-3 font-display text-4xl">Who's here?</h1>
+    <p className="mt-3 leading-7 text-muted-foreground">First names are enough. They're only used to guide you through.</p>
+    <label htmlFor="name-a" className="mt-8 block text-sm text-muted-foreground">First to write</label>
+    <Input id="name-a" value={nameA} onChange={(e) => setNameA(e.target.value.slice(0, 40))} placeholder="Name" className={`mt-2 ${field}`} />
+    <label htmlFor="name-b" className="mt-5 block text-sm text-muted-foreground">Second to write</label>
+    <Input id="name-b" value={nameB} onChange={(e) => setNameB(e.target.value.slice(0, 40))} placeholder="Name" className={`mt-2 ${field}`} />
+    <Button variant="heard" size="heard" className="mt-8 w-full" disabled={!valid} onClick={onContinue}>Continue <ArrowRight /></Button>
   </section>;
 }
 
-function TwoChoice({ joinCode, setJoinCode, onCreate, onJoin, busy }: { joinCode: string; setJoinCode: (v: string) => void; onCreate: () => void; onJoin: () => void; busy: boolean }) {
+function Handoff({ nameA, nameB, onReady }: { nameA: string; nameB: string; onReady: () => void }) {
+  return <section className="text-center">
+    <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border bg-surface"><Smartphone className="size-7 text-primary" /></div>
+    <h1 className="mt-7 font-display text-4xl">Pass the device to {nameB}</h1>
+    <p className="mx-auto mt-4 max-w-sm leading-7 text-muted-foreground">{nameA}'s response is sealed and hidden. When {nameB} has the device, they can continue.</p>
+    <Button variant="heard" size="heard" className="mt-9 w-full" onClick={onReady}>I'm {nameB} — I'm ready <ArrowRight /></Button>
+  </section>;
+}
+
+function TwoChoice({ name, setName, joinCode, setJoinCode, onCreate, onJoin, busy }: { name: string; setName: (v: string) => void; joinCode: string; setJoinCode: (v: string) => void; onCreate: () => void; onJoin: () => void; busy: boolean }) {
   return <section>
     <p className="text-sm font-medium text-primary">Two devices</p><h1 className="mt-3 font-display text-4xl">Meet in a private room.</h1>
     <p className="mt-3 leading-7 text-muted-foreground">One person creates a room. The other joins with its four-letter code.</p>
-    <Button variant="heard" size="heard" className="mt-8 w-full" onClick={onCreate} disabled={busy}>{busy ? <LoaderCircle className="animate-spin" /> : <Link2 />}Create a room</Button>
+    <label htmlFor="my-name" className="mt-8 block text-sm text-muted-foreground">Your first name</label>
+    <Input id="my-name" value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} placeholder="Name" className="mt-2 h-14 border border-primary/30 bg-card text-base" />
+    <Button variant="heard" size="heard" className="mt-6 w-full" onClick={onCreate} disabled={busy || !name.trim()}>{busy ? <LoaderCircle className="animate-spin" /> : <Link2 />}Create a room</Button>
     <div className="my-7 flex items-center gap-4 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or join one<span className="h-px flex-1 bg-border" /></div>
     <label htmlFor="room-code" className="text-sm text-muted-foreground">Room code</label>
-    <div className="mt-2 flex gap-2"><Input id="room-code" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4))} placeholder="HEAR" className="h-14 border border-primary/30 bg-card text-center font-mono text-xl uppercase tracking-[0.35em]" /><Button variant="quiet" size="heard" onClick={onJoin} disabled={joinCode.length !== 4 || busy}>Join</Button></div>
+    <div className="mt-2 flex gap-2"><Input id="room-code" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4))} placeholder="HEAR" className="h-14 border border-primary/30 bg-card text-center font-mono text-xl uppercase tracking-[0.35em]" /><Button variant="quiet" size="heard" onClick={onJoin} disabled={joinCode.length !== 4 || busy || !name.trim()}>Join</Button></div>
   </section>;
 }
 
@@ -178,8 +209,8 @@ function RoomCode({ code, copied, onCopy }: { code: string; copied: boolean; onC
 function Waiting() { return <section className="text-center"><div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border bg-surface"><EyeOff className="size-7 text-primary" /></div><h1 className="mt-7 font-display text-4xl">Your response is safe.</h1><p className="mx-auto mt-4 max-w-sm leading-7 text-muted-foreground">It stays private while the other person finishes. The reflection appears for both of you at the same time.</p><div className="mt-10 flex items-center justify-center gap-3 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin text-primary" />Waiting for them…</div></section>; }
 function Analyzing() { return <section className="text-center"><Sparkles className="mx-auto size-9 animate-pulse text-primary" /><h1 className="mt-7 font-display text-4xl">Finding the thread between you.</h1><p className="mt-4 text-muted-foreground">Reading both perspectives with care…</p></section>; }
 
-function Reveal({ analysis, onReset }: { analysis: ConflictAnalysis; onReset: () => void }) {
-  return <section className="py-6"><p className="text-sm font-medium text-primary">A shared reflection</p><h1 className="mt-3 font-display text-4xl">What seems to be underneath this.</h1><div className="mt-7 rounded-md heard-gradient p-6 text-primary-foreground"><p className="text-xs font-bold uppercase">The crux</p><p className="mt-3 font-display text-2xl leading-snug">{analysis.crux}</p></div><div className="mt-8 space-y-7"><Reframe label="Person A, fairly heard" text={analysis.personA} /><Reframe label="Person B, fairly heard" text={analysis.personB} /></div><div className="mt-9 border-t border-border pt-8"><h2 className="font-display text-3xl">Three ways forward</h2><ol className="mt-5 space-y-4">{analysis.compromises.map((item, index) => <li key={item} className="flex gap-4 rounded-md border border-border bg-surface p-4"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-soft-rose font-semibold text-primary-foreground">{index + 1}</span><span className="leading-6 text-foreground">{item}</span></li>)}</ol></div><p className="mt-8 text-sm leading-6 text-muted-foreground">This is a reflection, not a verdict. Keep what feels true and leave what doesn't.</p><Button variant="quiet" size="heard" className="mt-7 w-full" onClick={onReset}><RotateCcw />Start a new conversation</Button></section>;
+function Reveal({ nameA, nameB, analysis, onReset }: { nameA: string; nameB: string; analysis: ConflictAnalysis; onReset: () => void }) {
+  return <section className="py-6"><p className="text-sm font-medium text-primary">A shared reflection</p><h1 className="mt-3 font-display text-4xl">What seems to be underneath this.</h1><div className="mt-7 rounded-md heard-gradient p-6 text-primary-foreground"><p className="text-xs font-bold uppercase">The crux</p><p className="mt-3 font-display text-2xl leading-snug">{analysis.crux}</p></div><div className="mt-8 space-y-7"><Reframe label={`${nameA}, fairly heard`} text={analysis.personA} /><Reframe label={`${nameB}, fairly heard`} text={analysis.personB} /></div><div className="mt-9 border-t border-border pt-8"><h2 className="font-display text-3xl">Three ways forward</h2><ol className="mt-5 space-y-4">{analysis.compromises.map((item, index) => <li key={item} className="flex gap-4 rounded-md border border-border bg-surface p-4"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-soft-rose font-semibold text-primary-foreground">{index + 1}</span><span className="leading-6 text-foreground">{item}</span></li>)}</ol></div><p className="mt-8 text-sm leading-6 text-muted-foreground">This is a reflection, not a verdict. Keep what feels true and leave what doesn't.</p><Button variant="quiet" size="heard" className="mt-7 w-full" onClick={onReset}><RotateCcw />Start a new conversation</Button></section>;
 }
 
 function Reframe({ label, text }: { label: string; text: string }) { return <div><p className="text-xs font-bold uppercase text-soft-rose">{label}</p><p className="mt-2 leading-7 text-foreground">{text}</p></div>; }
