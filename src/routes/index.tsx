@@ -133,7 +133,7 @@ function Landing({ onSingle, onTwo }: { onSingle: () => void; onTwo: () => void 
     <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">Each person shares privately. Nothing is revealed until both are ready. Then Heard helps you find the heart of the disagreement—and a way forward.</p>
     <div className="mt-10 grid gap-3">
       <Button variant="heard" size="heard" onClick={onSingle} className="justify-between"><span className="flex items-center gap-3"><Smartphone />One device, passed between us</span><ArrowRight /></Button>
-      <Button variant="quiet" size="heard" onClick={onTwo} className="justify-between"><span className="flex items-center gap-3"><Users />Two devices, joined by code</span><ArrowRight /></Button>
+      <Button variant="heard" size="heard" onClick={onTwo} className="justify-between"><span className="flex items-center gap-3"><Users />Two devices, joined by code</span><ArrowRight /></Button>
     </div>
   </section>;
 }
