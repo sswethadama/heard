@@ -101,7 +101,7 @@ function HeardApp() {
   };
 
   return (
-    <main className="min-h-dvh bg-background text-foreground">
+    <main className="min-h-dvh text-foreground">
       <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
         <header className="flex h-10 items-center justify-between">
           <button type="button" onClick={reset} className="font-display text-2xl text-foreground" aria-label="Return to start">Heard<span className="text-primary">.</span></button>
