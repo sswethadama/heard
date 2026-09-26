@@ -149,8 +149,8 @@
   body {
     background-color: var(--color-background);
     background-image:
-      radial-gradient(130% 62% at 50% -22%, oklch(0.35 0.085 6) 0%, oklch(0.26 0.045 350) 38%, transparent 68%),
-      linear-gradient(180deg, oklch(0.23 0.02 350) 0%, var(--background) 42%, oklch(0.13 0.012 245) 100%);
+      radial-gradient(140% 70% at 50% -25%, oklch(0.42 0.13 6) 0%, oklch(0.28 0.055 350) 42%, transparent 72%),
+      linear-gradient(180deg, oklch(0.26 0.035 350) 0%, var(--background) 46%, oklch(0.13 0.012 245) 100%);
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
