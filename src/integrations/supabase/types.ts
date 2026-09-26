@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      heard_rooms: {
+        Row: {
+          analysis: Json | null
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          person_a_submitted_at: string | null
+          person_a_text: string | null
+          person_a_token: string
+          person_b_joined_at: string | null
+          person_b_submitted_at: string | null
+          person_b_text: string | null
+          person_b_token: string
+        }
+        Insert: {
+          analysis?: Json | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          person_a_submitted_at?: string | null
+          person_a_text?: string | null
+          person_a_token?: string
+          person_b_joined_at?: string | null
+          person_b_submitted_at?: string | null
+          person_b_text?: string | null
+          person_b_token?: string
+        }
+        Update: {
+          analysis?: Json | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          person_a_submitted_at?: string | null
+          person_a_text?: string | null
+          person_a_token?: string
+          person_b_joined_at?: string | null
+          person_b_submitted_at?: string | null
+          person_b_text?: string | null
+          person_b_token?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
