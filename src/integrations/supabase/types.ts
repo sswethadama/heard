@@ -59,6 +59,44 @@ export type Database = {
         }
         Relationships: []
       }
+      rooms: {
+        Row: {
+          heard_room_id: string
+          id: string
+          name_a: string | null
+          name_b: string | null
+          room_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          heard_room_id: string
+          id?: string
+          name_a?: string | null
+          name_b?: string | null
+          room_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          heard_room_id?: string
+          id?: string
+          name_a?: string | null
+          name_b?: string | null
+          room_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_heard_room_id_fkey"
+            columns: ["heard_room_id"]
+            isOneToOne: true
+            referencedRelation: "heard_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
