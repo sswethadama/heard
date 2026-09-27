@@ -279,13 +279,13 @@ export const submitRoomPerspective = createServerFn({ method: "POST" })
 
     if (updated.person_a_submitted_at && updated.person_b_submitted_at && updated.person_a_text && updated.person_b_text) {
       const analysis = updated.analysis as ConflictAnalysis | null;
-      if (analysis) return { bothSubmitted: true, analysis };
+      if (analysis) return { bothSubmitted: true, analysis, textA: updated.person_a_text, textB: updated.person_b_text };
       await setRoomSignal(data.roomId, { status: "analyzing" });
       const freshAnalysis = await analyzeTexts(updated.person_a_text, updated.person_b_text);
       await supabaseAdmin.from("heard_rooms").update({ analysis: freshAnalysis }).eq("id", data.roomId).is("analysis", null);
       await setRoomSignal(data.roomId, { status: "revealed" });
-      return { bothSubmitted: true, analysis: freshAnalysis };
+      return { bothSubmitted: true, analysis: freshAnalysis, textA: updated.person_a_text, textB: updated.person_b_text };
     }
     await setRoomSignal(data.roomId, { status: data.role === "a" ? "a_submitted" : "b_submitted" });
-    return { bothSubmitted: false, analysis: null };
+    return { bothSubmitted: false, analysis: null, textA: null, textB: null };
   });
