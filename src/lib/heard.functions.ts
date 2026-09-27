@@ -10,15 +10,15 @@ const roomCredentialsSchema = z.object({
 
 export type ConflictAnalysis = {
   crux: string;
-  personA: string;
-  personB: string;
+  reframeA: string;
+  reframeB: string;
   compromises: string[];
 };
 
 const fallbackAnalysis = (a: string, b: string): ConflictAnalysis => ({
   crux: "You are both trying to feel understood while protecting something important to you.",
-  personA: `One person is asking for their experience to be taken seriously: ${a.slice(0, 180)}`,
-  personB: `The other person is asking for their experience to be taken seriously: ${b.slice(0, 180)}`,
+  reframeA: `One person is asking for their experience to be taken seriously: ${a.slice(0, 180)}`,
+  reframeB: `The other person is asking for their experience to be taken seriously: ${b.slice(0, 180)}`,
   compromises: [
     "Take turns reflecting back what you heard before responding.",
     "Agree on one small change each person can try this week.",
@@ -42,7 +42,7 @@ async function analyzeTexts(personA: string, personB: string): Promise<ConflictA
         {
           role: "system",
           content:
-            "You are a neutral conflict mediator. Identify the underlying point of friction without assigning blame. Reframe each person's position generously and specifically. Offer exactly three realistic compromises. Never diagnose, shame, or decide who is right. Return only valid JSON with keys crux, personA, personB, compromises (array of exactly 3 strings).",
+            'Analyze two people\'s sides of an unresolved disagreement. Return ONLY JSON: {"crux": "1-2 sentences on the real underlying friction, which may differ from what either person said", "reframeA": "2-3 sentences reframing person A fairly, naming their real underlying need", "reframeB": "same for person B", "compromises": ["3 short, concrete, actionable compromises"]}',
         },
         {
           role: "user",
