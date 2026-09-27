@@ -20,10 +20,15 @@ export type Database = {
           code: string
           created_at: string
           expires_at: string
+          followup_analysis: Json | null
           id: string
+          person_a_followup: string | null
+          person_a_followup_at: string | null
           person_a_submitted_at: string | null
           person_a_text: string | null
           person_a_token: string
+          person_b_followup: string | null
+          person_b_followup_at: string | null
           person_b_joined_at: string | null
           person_b_submitted_at: string | null
           person_b_text: string | null
@@ -34,10 +39,15 @@ export type Database = {
           code: string
           created_at?: string
           expires_at?: string
+          followup_analysis?: Json | null
           id?: string
+          person_a_followup?: string | null
+          person_a_followup_at?: string | null
           person_a_submitted_at?: string | null
           person_a_text?: string | null
           person_a_token?: string
+          person_b_followup?: string | null
+          person_b_followup_at?: string | null
           person_b_joined_at?: string | null
           person_b_submitted_at?: string | null
           person_b_text?: string | null
@@ -48,10 +58,15 @@ export type Database = {
           code?: string
           created_at?: string
           expires_at?: string
+          followup_analysis?: Json | null
           id?: string
+          person_a_followup?: string | null
+          person_a_followup_at?: string | null
           person_a_submitted_at?: string | null
           person_a_text?: string | null
           person_a_token?: string
+          person_b_followup?: string | null
+          person_b_followup_at?: string | null
           person_b_joined_at?: string | null
           person_b_submitted_at?: string | null
           person_b_text?: string | null
