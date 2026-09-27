@@ -63,8 +63,8 @@ async function analyzeTexts(personA: string, personB: string): Promise<ConflictA
     const parsed = JSON.parse(content) as ConflictAnalysis;
     if (
       typeof parsed.crux === "string" &&
-      typeof parsed.personA === "string" &&
-      typeof parsed.personB === "string" &&
+      typeof parsed.reframeA === "string" &&
+      typeof parsed.reframeB === "string" &&
       Array.isArray(parsed.compromises) &&
       parsed.compromises.length === 3
     ) {
