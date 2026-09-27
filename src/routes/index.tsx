@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Check, Copy, EyeOff, Link2, LoaderCircle, LockKeyhole, RotateCcw, Smartphone, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, EyeOff, Link2, LoaderCircle, LockKeyhole, MessageCircle, RotateCcw, Smartphone, Sparkles, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 
