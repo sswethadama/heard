@@ -15,6 +15,13 @@
       "when": 1790434041314,
       "tag": "0001_create_rooms_realtime",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790491560853,
+      "tag": "0002_add_followup_round",
+      "breakpoints": true
     }
   ]
 }
