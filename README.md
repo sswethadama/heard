@@ -82,3 +82,17 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+## Full disclosure
+
+The idea, product design, user experience decisions, conflict-analysis 
+approach, and overall concept for Heard are original to this team.
+
+AI tools like lovable were used to help write and generate the code based on our design 
+and instructions — this is disclosed as per the hackathon's policy on AI/
+existing code usage.
+
+## Timeline
+
+- **Before the event:** Concept development, product design, and initial 
+  prototype (single-device and two-device modes)
+-
