@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Check, Copy, EyeOff, Link2, LoaderCircle, LockKeyhole, RotateCcw, Smartphone, Sparkles, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,13 +85,9 @@ function HeardApp() {
   useEffect(() => {
     if (!room || !["room", "waiting", "analyzing"].includes(screen)) return;
     void checkStatus();
-    const channel = supabase
-      .channel(`room-${room.code}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `room_code=eq.${room.code}` }, () => void checkStatus())
-      .subscribe();
-    // Slow safety net in case the live connection drops.
-    const interval = window.setInterval(() => void checkStatus(), 15000);
-    return () => { window.clearInterval(interval); void supabase.removeChannel(channel); };
+    // Poll the token-scoped server function; the rooms table is not publicly readable.
+    const interval = window.setInterval(() => void checkStatus(), 2500);
+    return () => window.clearInterval(interval);
   }, [room, screen, checkStatus]);
 
   const submitRoom = async () => {
