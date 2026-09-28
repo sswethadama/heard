@@ -145,7 +145,7 @@ export const getRoomStatus = createServerFn({ method: "POST" })
     const tokenColumn = data.role === "a" ? "person_a_token" : "person_b_token";
     const { data: room } = await supabaseAdmin
       .from("heard_rooms")
-      .select("person_b_joined_at, person_a_submitted_at, person_b_submitted_at, analysis, expires_at, person_a_text, person_b_text, followup_analysis")
+      .select("person_b_joined_at, person_a_submitted_at, person_b_submitted_at, analysis, expires_at, person_a_text, person_b_text, person_a_followup, person_b_followup, followup_analysis")
       .eq("id", data.roomId)
       .eq(tokenColumn, data.token)
       .gt("expires_at", new Date().toISOString())
@@ -153,6 +153,7 @@ export const getRoomStatus = createServerFn({ method: "POST" })
     if (!room) throw new Error("This private room is no longer available.");
     const { data: signal } = await supabaseAdmin.from("rooms").select("name_a, name_b").eq("heard_room_id", data.roomId).maybeSingle();
     const revealed = Boolean(room.analysis);
+    const followupRevealed = Boolean(room.followup_analysis);
     return {
       nameA: signal?.name_a ?? "Person A",
       nameB: signal?.name_b ?? "Person B",
@@ -164,6 +165,9 @@ export const getRoomStatus = createServerFn({ method: "POST" })
       textA: revealed ? room.person_a_text : null,
       textB: revealed ? room.person_b_text : null,
       followup: room.followup_analysis as FollowupAnalysis | null,
+      // Follow-up texts are only released once the follow-up reveal has happened.
+      followupTextA: followupRevealed ? room.person_a_followup : null,
+      followupTextB: followupRevealed ? room.person_b_followup : null,
     };
   });
 
@@ -246,7 +250,7 @@ export const submitRoomFollowup = createServerFn({ method: "POST" })
       .select("person_a_text, person_b_text, analysis, person_a_followup, person_b_followup, followup_analysis")
       .maybeSingle();
     if (error || !row) throw new Error("Your response couldn't be saved. Please try again.");
-    if (row.followup_analysis) return { followup: row.followup_analysis as FollowupAnalysis };
+    if (row.followup_analysis) return { followup: row.followup_analysis as FollowupAnalysis, followupTextA: row.person_a_followup, followupTextB: row.person_b_followup };
     if (row.person_a_followup && row.person_b_followup && row.person_a_text && row.person_b_text) {
       const followup = await analyzeFollowupTexts({
         textA: row.person_a_text, textB: row.person_b_text, analysis: row.analysis as ConflictAnalysis,
@@ -254,9 +258,9 @@ export const submitRoomFollowup = createServerFn({ method: "POST" })
       });
       await supabaseAdmin.from("heard_rooms").update({ followup_analysis: followup }).eq("id", data.roomId).is("followup_analysis", null);
       await setRoomSignal(data.roomId, { status: "followup_revealed" });
-      return { followup };
+      return { followup, followupTextA: row.person_a_followup, followupTextB: row.person_b_followup };
     }
-    return { followup: null };
+    return { followup: null, followupTextA: null, followupTextB: null };
   });
 
 export const submitRoomPerspective = createServerFn({ method: "POST" })
