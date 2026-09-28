@@ -140,8 +140,7 @@ function HeardApp() {
 
   return (
     <main className="min-h-dvh text-foreground">
-      <OceanBackdrop />
-      <div className="heard-content-veil relative z-10 mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
+      <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
         <header className="flex h-10 items-center justify-between">
           <button type="button" onClick={reset} className="font-display text-2xl text-foreground" aria-label="Return to start">Heard<span className="text-primary">.</span></button>
           {screen !== "landing" && <Button variant="ghost" size="icon" onClick={reset} aria-label="Start over"><RotateCcw /></Button>}
@@ -169,52 +168,6 @@ function HeardApp() {
         {screen !== "reveal" && screen !== "followup-reveal" && <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"><LockKeyhole className="size-3.5" /> Private by design. Rooms expire after 24 hours.</p>}
       </div>
     </main>
-  );
-}
-
-function OceanBackdrop() {
-  return (
-    <div className="ocean-backdrop" aria-hidden="true">
-      <div className="ocean-surface-glow" />
-      <svg className="ocean-rays" viewBox="0 0 1000 1000" preserveAspectRatio="none">
-        <defs>
-          <filter id="ocean-ray-wobble" x="-30%" y="-20%" width="160%" height="150%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="12" result="rayNoise">
-              <animate attributeName="baseFrequency" dur="14s" values="0.008 0.014;0.012 0.01;0.008 0.014" repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="rayNoise" scale="17" xChannelSelector="R" yChannelSelector="B" />
-            <feGaussianBlur stdDeviation="18" />
-          </filter>
-        </defs>
-        <g className="ocean-ray-group" filter="url(#ocean-ray-wobble)">
-          <path className="ocean-ray ocean-ray-one" d="M430,-30 C360,230 235,500 90,850 L300,900 C400,530 470,250 490,-30 Z" />
-          <path className="ocean-ray ocean-ray-two" d="M465,-30 C430,245 390,535 340,900 L505,930 C505,560 505,250 515,-30 Z" />
-          <path className="ocean-ray ocean-ray-three" d="M495,-30 C505,270 530,560 565,930 L705,900 C615,520 555,225 535,-30 Z" />
-          <path className="ocean-ray ocean-ray-four" d="M515,-30 C575,230 690,510 825,865 L945,790 C755,465 630,210 565,-30 Z" />
-          <path className="ocean-ray ocean-ray-five" d="M405,-30 C300,190 155,400 -5,630 L120,720 C310,390 420,170 465,-30 Z" />
-        </g>
-      </svg>
-      <svg className="ocean-caustics" viewBox="0 0 1000 600" preserveAspectRatio="none">
-        <defs>
-          <filter id="ocean-caustic-filter" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="turbulence" baseFrequency="0.018 0.052" numOctaves="3" seed="8" result="causticNoise">
-              <animate attributeName="baseFrequency" dur="18s" values="0.018 0.052;0.024 0.043;0.018 0.052" repeatCount="indefinite" />
-            </feTurbulence>
-            <feColorMatrix
-              in="causticNoise"
-              type="matrix"
-              values="0 0 0 0 0.95
-                      0 0 0 0 0.68
-                      0 0 0 0 0.76
-                      0 0 0 8 -5.5"
-            />
-            <feGaussianBlur stdDeviation="1.5" />
-          </filter>
-        </defs>
-        <rect width="1000" height="600" filter="url(#ocean-caustic-filter)" />
-      </svg>
-      <div className="ocean-reading-shade" />
-    </div>
   );
 }
 

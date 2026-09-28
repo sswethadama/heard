@@ -69,11 +69,6 @@
 
 :root {
   --radius: 0.5rem;
-  --ocean-rose: #d9758f;
-  --ocean-wine: #8a3f5c;
-  --ocean-deep: #3d1a2b;
-  --ocean-black: #0b0509;
-  --ocean-light: #f6c7d5;
   --background: oklch(0.215 0.012 245);
   --foreground: oklch(0.955 0.012 88);
   --card: oklch(0.278 0.015 245);
@@ -152,7 +147,11 @@
   }
 
   body {
-    background-color: var(--ocean-black);
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(140% 70% at 50% -25%, oklch(0.42 0.13 6) 0%, oklch(0.28 0.055 350) 42%, transparent 72%),
+      linear-gradient(180deg, oklch(0.26 0.035 350) 0%, var(--background) 46%, oklch(0.13 0.012 245) 100%);
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     letter-spacing: 0;
@@ -163,81 +162,6 @@
   ::selection {
     background: color-mix(in oklab, var(--primary) 45%, transparent);
   }
-}
-
-.ocean-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    var(--ocean-rose) 0%,
-    var(--ocean-wine) 27%,
-    var(--ocean-deep) 57%,
-    var(--ocean-black) 100%
-  );
-}
-
-.ocean-surface-glow {
-  position: absolute;
-  top: -20%;
-  left: -15%;
-  width: 130%;
-  height: 52%;
-  background: radial-gradient(ellipse at 50% 15%, color-mix(in oklab, var(--ocean-light) 82%, transparent) 0%, color-mix(in oklab, var(--ocean-light) 28%, transparent) 36%, transparent 72%);
-  filter: blur(34px);
-  opacity: 0.62;
-  animation: ocean-surface-drift 9s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-.ocean-rays {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 78%;
-  overflow: visible;
-  opacity: 0.38;
-  mix-blend-mode: screen;
-}
-
-.ocean-ray {
-  fill: var(--ocean-light);
-  transform-box: fill-box;
-  transform-origin: 50% 0%;
-  animation: ocean-ray-sway 10s ease-in-out infinite alternate;
-}
-
-.ocean-ray-one { opacity: 0.22; animation-delay: -8s; }
-.ocean-ray-two { opacity: 0.16; animation-delay: -5s; }
-.ocean-ray-three { opacity: 0.2; animation-delay: -2s; }
-.ocean-ray-four { opacity: 0.14; animation-delay: -7s; }
-.ocean-ray-five { opacity: 0.12; animation-delay: -4s; }
-
-.ocean-caustics {
-  position: absolute;
-  left: -5%;
-  bottom: -3%;
-  width: 110%;
-  height: 56%;
-  opacity: 0.5;
-  mix-blend-mode: screen;
-  filter: blur(0.5px);
-  mask-image: linear-gradient(to bottom, transparent 0%, transparent 4%, rgb(0 0 0 / 0.2) 26%, #000 67%);
-}
-
-.ocean-reading-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgb(8 3 7 / 0.14), rgb(8 3 7 / 0.04) 50%, rgb(8 3 7 / 0.14));
-}
-
-.heard-content-veil {
-  background: linear-gradient(180deg, rgb(10 5 9 / 0.42), rgb(9 5 8 / 0.68));
-  box-shadow: 0 0 72px 34px rgb(8 4 7 / 0.38);
-  backdrop-filter: blur(2px);
 }
 
 /* Warm rose gradient used by primary buttons and the crux reveal box */
@@ -279,19 +203,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes ocean-surface-drift {
-  0%, 100% { opacity: 0.42; transform: translate3d(-3%, 0, 0) scale(0.98); }
-  50% { opacity: 0.72; transform: translate3d(3%, 2%, 0) scale(1.04); }
-}
-
-@keyframes ocean-ray-sway {
-  from { transform: rotate(-4deg) translateX(-1%); }
-  to { transform: rotate(4deg) translateX(1%); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; }
-  .ocean-surface-glow,
-  .ocean-rays,
-  .ocean-caustics { display: none; }
 }
