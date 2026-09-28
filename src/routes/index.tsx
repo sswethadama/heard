@@ -86,7 +86,7 @@ function HeardApp() {
       setNameA(status.nameA); setNameB(status.nameB);
       if (status.textA) setTextA(status.textA);
       if (status.textB) setTextB(status.textB);
-      if (status.followup) { setAnalysis(status.analysis); setFollowup(status.followup); setScreen("followup-reveal"); return; }
+      if (status.followup) { setAnalysis(status.analysis); setFollowup(status.followup); if (status.followupTextA) setFollowA(status.followupTextA); if (status.followupTextB) setFollowB(status.followupTextB); setScreen("followup-reveal"); return; }
       if (status.analysis && screen !== "followup-waiting") { setAnalysis(status.analysis); setScreen("reveal"); return; }
       if (screen === "room" && status.joined) setScreen("write");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "This room is unavailable."); }
@@ -130,7 +130,7 @@ function HeardApp() {
     setBusy(true); setError("");
     try {
       const result = await submitFollowFn({ data: { ...room, text: room.role === "a" ? followA : followB } });
-      if (result.followup) { setFollowup(result.followup); setScreen("followup-reveal"); }
+      if (result.followup) { setFollowup(result.followup); if (result.followupTextA) setFollowA(result.followupTextA); if (result.followupTextB) setFollowB(result.followupTextB); setScreen("followup-reveal"); }
       else setScreen("followup-waiting");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Please try again."); }
     finally { setBusy(false); }
@@ -162,7 +162,7 @@ function HeardApp() {
           {screen === "followup-b" && <FollowupWrite person={nameB || "Person B"} value={followB} onChange={setFollowB} onBack={() => setScreen("followup-handoff")} onSubmit={submitFollowSingle} busy={false} />}
           {screen === "followup-write" && room && <FollowupWrite person={myName.trim() || "You"} value={room.role === "a" ? followA : followB} onChange={room.role === "a" ? setFollowA : setFollowB} onBack={() => setScreen("reveal")} onSubmit={submitFollowRoom} busy={busy} />}
           {screen === "followup-waiting" && <Waiting />}
-          {screen === "followup-reveal" && followup && <FollowupReveal followup={followup} onReset={reset} />}
+          {screen === "followup-reveal" && followup && <FollowupReveal nameA={nameA || "Person A"} nameB={nameB || "Person B"} followA={followA} followB={followB} followup={followup} onReset={reset} />}
           {error && <p role="alert" className="mt-5 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground">{error}</p>}
         </div>
         {screen !== "reveal" && screen !== "followup-reveal" && <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"><LockKeyhole className="size-3.5" /> Private by design. Rooms expire after 24 hours.</p>}
@@ -264,8 +264,8 @@ function FollowupWrite({ person, value, onChange, onBack, onSubmit, busy }: { pe
 
 const outcomeLabel = { agreement: "You've found agreement", partial: "You're partly there", unresolved: "Still some distance" } as const;
 
-function FollowupReveal({ followup, onReset }: { followup: FollowupAnalysis; onReset: () => void }) {
-  return <section className="py-6"><p className="text-sm font-medium text-primary">Follow-up</p><h1 className="mt-3 font-display text-4xl">{outcomeLabel[followup.outcome]}</h1><p className="mt-5 leading-7 text-foreground">{followup.summary}</p>{followup.unresolved && <div className="mt-7"><Reframe label="Still unresolved" text={followup.unresolved} /></div>}<div className="mt-7 rounded-md heard-gradient p-6 text-primary-foreground"><p className="text-xs font-bold uppercase">A refined way forward</p><p className="mt-3 font-display text-2xl leading-snug">{followup.refinedCompromise}</p></div><Button variant="quiet" size="heard" className="mt-9 w-full" onClick={onReset}><RotateCcw />Start over</Button></section>;
+function FollowupReveal({ nameA, nameB, followA, followB, followup, onReset }: { nameA: string; nameB: string; followA: string; followB: string; followup: FollowupAnalysis; onReset: () => void }) {
+  return <section className="py-6"><p className="text-sm font-medium text-primary">Follow-up</p><h1 className="mt-3 font-display text-4xl">What was said this round.</h1>{(followA || followB) && <div className="mt-7 space-y-3"><Original label={`${nameA} said`} text={followA} /><Original label={`${nameB} said`} text={followB} /></div>}<h2 className="mt-9 font-display text-3xl">{outcomeLabel[followup.outcome]}</h2><p className="mt-5 leading-7 text-foreground">{followup.summary}</p>{followup.unresolved && <div className="mt-7"><Reframe label="Still unresolved" text={followup.unresolved} /></div>}<div className="mt-7 rounded-md heard-gradient p-6 text-primary-foreground"><p className="text-xs font-bold uppercase">A refined way forward</p><p className="mt-3 font-display text-2xl leading-snug">{followup.refinedCompromise}</p></div><Button variant="quiet" size="heard" className="mt-9 w-full" onClick={onReset}><RotateCcw />Start over</Button></section>;
 }
 
 function Reframe({ label, text }: { label: string; text: string }) { return <div><p className="text-xs font-bold uppercase text-soft-rose">{label}</p><p className="mt-2 leading-7 text-foreground">{text}</p></div>; }
