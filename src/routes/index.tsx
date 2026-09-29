@@ -146,10 +146,9 @@ function HeardApp() {
       <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
         <header className="flex h-10 items-center justify-between">
           <button type="button" onClick={reset} className="font-display text-2xl text-foreground" aria-label="Return to start">Heard<span className="text-primary">.</span></button>
-          {screen !== "landing" && <Button variant="ghost" size="icon" onClick={reset} aria-label="Start over"><RotateCcw /></Button>}
+          <Button variant="ghost" size="icon" onClick={reset} aria-label="Start over"><RotateCcw /></Button>
         </header>
         <div className="flex flex-1 flex-col justify-center py-8 animate-soft-in">
-          {screen === "landing" && <Landing onSingle={() => setScreen("names")} onTwo={() => setScreen("two-choice")} />}
           {screen === "names" && <Names nameA={nameA} nameB={nameB} setNameA={setNameA} setNameB={setNameB} onBack={() => setScreen("landing")} onContinue={() => setScreen("single-a")} />}
           {screen === "single-a" && <WriteScreen person={nameA || "Person A"} value={personA} onChange={setPersonA} onBack={() => setScreen("names")} onSubmit={() => setScreen("handoff")} busy={false} />}
           {screen === "handoff" && <Handoff nameA={nameA || "Person A"} nameB={nameB || "Person B"} onReady={() => setScreen("single-b")} />}
