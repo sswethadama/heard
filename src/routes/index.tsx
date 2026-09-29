@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 
 import { Button } from "@/components/ui/button";
+import { HeardHome } from "@/components/HeardHome";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { analyzeConflict, analyzeFollowup, createRoom, getRoomStatus, joinRoom, submitRoomFollowup, submitRoomPerspective, type ConflictAnalysis, type FollowupAnalysis } from "@/lib/heard.functions";
@@ -138,6 +139,8 @@ function HeardApp() {
 
   const continueConversation = () => setScreen(room ? "followup-write" : "followup-a");
 
+  if (screen === "landing") return <main className="min-h-dvh text-foreground"><HeardHome onSingle={() => setScreen("names")} onTwo={() => setScreen("two-choice")} /></main>;
+
   return (
     <main className="min-h-dvh text-foreground">
       <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
@@ -190,7 +193,7 @@ function WriteScreen({ person, value, onChange, onBack, onSubmit, busy }: { pers
     <p className="text-sm font-medium text-primary">{person}'s private space</p>
     <h1 className="mt-3 font-display text-4xl leading-tight">What do you wish they understood?</h1>
     <p className="mt-3 text-sm leading-6 text-muted-foreground">Write honestly. Focus on what happened, how it affected you, and what you need now.</p>
-    <Textarea autoFocus value={value} onChange={(event) => onChange(event.target.value)} placeholder="I felt… when… What I need is…" className="mt-7 min-h-64 resize-none border border-primary/30 bg-card p-4 leading-7 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] focus-visible:ring-primary" maxLength={5000} />
+    <Textarea autoFocus value={value} onChange={(event) => onChange(event.target.value)} placeholder="I felt… when… What I need is…" className="mt-7 min-h-64 resize-none border border-primary/30 bg-card p-4 leading-7  focus-visible:ring-primary" maxLength={5000} />
     <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>Only you can see this right now</span><span>{value.length}/5000</span></div>
     <Button variant="heard" size="heard" className="mt-7 w-full" disabled={!valid || busy} onClick={() => void onSubmit()}>{busy ? <LoaderCircle className="animate-spin" /> : <LockKeyhole />}{busy ? "Saving…" : "Seal my response"}</Button>
   </section>;
@@ -256,7 +259,7 @@ function FollowupWrite({ person, value, onChange, onBack, onSubmit, busy }: { pe
     <p className="text-sm font-medium text-primary">{person}'s private space</p>
     <h1 className="mt-3 font-display text-4xl leading-tight">Does this work for you? Anything to add?</h1>
     <p className="mt-3 text-sm leading-6 text-muted-foreground">Kept private until you've both answered.</p>
-    <Textarea autoFocus value={value} onChange={(e) => onChange(e.target.value)} placeholder="Yes, and… / Not quite, because…" className="mt-7 min-h-40 resize-none border border-primary/30 bg-card p-4 leading-7 shadow-[inset_0_1px_0_oklch(1_0_0/0.04)] focus-visible:ring-primary" maxLength={2000} />
+    <Textarea autoFocus value={value} onChange={(e) => onChange(e.target.value)} placeholder="Yes, and… / Not quite, because…" className="mt-7 min-h-40 resize-none border border-primary/30 bg-card p-4 leading-7  focus-visible:ring-primary" maxLength={2000} />
     <div className="mt-2 flex justify-end text-xs text-muted-foreground">{value.length}/2000</div>
     <Button variant="heard" size="heard" className="mt-7 w-full" disabled={!valid || busy} onClick={() => void onSubmit()}>{busy ? <LoaderCircle className="animate-spin" /> : <LockKeyhole />}{busy ? "Saving…" : "Seal my response"}</Button>
   </section>;
